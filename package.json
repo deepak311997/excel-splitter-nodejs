@@ -1,0 +1,15 @@
+{
+  "name": "excel-splitter-nodejs",
+  "version": "1.0.0",
+  "description": "A Nodejs app that splits into unique excel based on a creteria ",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Deepak <deepak311997@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "minimist": "^1.2.5",
+    "xlsx": "^0.15.6"
+  }
+}
