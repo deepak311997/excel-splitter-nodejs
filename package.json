@@ -4,12 +4,17 @@
   "description": "A Nodejs app that splits into unique excel based on a creteria ",
   "main": "app.js",
   "scripts": {
+    "build": "pkg script.js --targets win",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Deepak <deepak311997@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "exceljs": "^3.8.2",
     "minimist": "^1.2.5",
     "xlsx": "^0.15.6"
+  },
+  "devDependencies": {
+    "pkg": "^4.4.6"
   }
 }
