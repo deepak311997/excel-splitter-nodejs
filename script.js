@@ -28,10 +28,6 @@ const removeColumns = {
     category: ["Location", "Site", "Manager"],
     manager: ["Manager Name"],
 };
-const sheetNames = {
-    manager: "Manager Name",
-    category: "Category",
-}
 const types = {
     manager: 'ManagerMailID',
     category: "Category",
@@ -39,28 +35,6 @@ const types = {
 const dateColumns = {
     manager: [4, 5],
     category: [4, 5],
-}
-
-// Script arguments
-let args = require("minimist")(process.argv.slice(2), {
-    boolean: "help",
-    string: ["inputfile", "outdir", "date", "type"],
-    alias: {
-        i: "inputFile",
-        o: "outdir",
-        d: "date",
-        t: "type",
-    }
-})
-const basePath = process.env.basePath || __dirname;
-
-// Script help
-function help() {
-    console.log("Excel splitter usage");
-    console.log("   --inputfile or --i : Input file path with filename");
-    console.log("   --outdir    or --o : Output directory path to save output files");
-    console.log("   --date      or --d : Date of generation");
-    console.log("   --type      or --t : Column type for splitting (manager) / (category)");
 }
 
 function printError(error) {
@@ -81,11 +55,11 @@ function printOutput(total, successful, failed) {
     printStatus("***********************************************************************************");
 }
 
-function formatWorksheet(ws) {
-    for (let i = 1; i <= tableHeaders[args.t].length; i++) {
+async function formatWorksheet(ws, type) {
+    for (let i = 1; i <= tableHeaders[type].length; i++) {
         ws.getColumn(i).width = 30;
 
-        if (dateColumns[args.t].includes(i)) {
+        if (dateColumns[type].includes(i)) {
             ws.getColumn(i).style = { numFmt: 'dd-mmm-yy', alignment: { horizontal: 'left' } };
         } else {
             ws.getColumn(i).style = { alignment: { horizontal: 'left' } };
@@ -95,8 +69,8 @@ function formatWorksheet(ws) {
     return ws;
 }
 
-function fileBasicData(ws, fileData) {
-    if (args.t === 'manager') {
+async function fileBasicData(ws, fileData, type) {
+    if (type === 'manager') {
         ws.mergeCells('A1:J1');
     } else {
         ws.mergeCells('A1:H1');
@@ -105,7 +79,7 @@ function fileBasicData(ws, fileData) {
     ws.getRow(1).height = 30;
     const fileHeader = ws.getCell('A1');
     
-    fileHeader.value = fileTitles[args.t]
+    fileHeader.value = fileTitles[type]
     fileHeader.font = { size: 14, bold: true, color: { argb: 'ffffff' } };
     fileHeader.alignment = { horizontal: 'center', vertical: 'middle' };
     fileHeader.fill = {
@@ -122,7 +96,7 @@ function fileBasicData(ws, fileData) {
         };
     }
 
-    ws = formatWorksheet(ws);
+    ws = await formatWorksheet(ws, type);
 
     return ws;
 }
@@ -135,12 +109,12 @@ function initialNewWorkbook(sheetName) {
     wb.calcProperties.fullCalcOnLoad = true;
     wb.views = [{ x: 0, y: 0, width: 10000, height: 20000, firstSheet: 0, activeTab: 1, visibility: 'visible' }];
 
-    const ws = wb.addWorksheet(sheetName, { views: [{ showGridLines: false }] });
+    wb.addWorksheet(sheetName, { views: [{ showGridLines: false }] });
 
-    return { wb, ws };
+    return wb;
 }
 
-function addFileData(ws, rows) {
+function addFileData(ws, rows, type) {
     ws.addTable({
         name: 'employeeTable',
         ref: 'A8',
@@ -148,23 +122,23 @@ function addFileData(ws, rows) {
         style: {
             showRowStripes: true,
         },
-        columns: tableHeaders[args.t],
+        columns: tableHeaders[type],
         rows: rows.map(row => Object.values(row)),
     }).commit();
 }
 
-async function writeFiles(uniqueCategories, fileDescription) {
+async function writeFiles(uniqueCategories, fileDescription, args) {
     let successful = 0, failed = 0;
     const total = uniqueCategories.size;
     for (const [key, values] of uniqueCategories) {
-        let { wb, ws } = initialNewWorkbook(key);
+        let wb = initialNewWorkbook(key);
 
         // Write into excel
-        ws = fileBasicData(ws, fileDescription.get(key));
-        ws = addFileData(ws, values);
+        fileBasicData(wb.worksheets[0], fileDescription.get(key), args.type);
+        addFileData(wb.worksheets[0], values, args.type);
 
         try {
-            await wb.xlsx.writeFile(`${args.o}/${key}.xlsx`);
+            await wb.xlsx.writeFile(`${args.outdir}/${key}.xlsx`);
             successful = successful + 1;
             printStatus(`${key} file generated`);
         } catch (er) {
@@ -173,18 +147,19 @@ async function writeFiles(uniqueCategories, fileDescription) {
         };
     }
     printOutput(total, successful, failed);
+    return 'Files Successfully generated !!';
 }
 
-function processFileData(sheet) {
+async function processFileData(sheet, args) {
     printStatus("File processing started...");
 
     const rows = xlsx.utils.sheet_to_json(sheet, { defval: ' ' });
     const uniqueCategories = new Map(), fileDescription = new Map();
     for (const row of rows) {
-        const uniqueKey = row[types[args.t]].trim().toLowerCase();
+        const uniqueKey = row[types[args.type]].trim().toLowerCase();
 
         if (!uniqueCategories.has(uniqueKey)) {
-            const fileBasicContent = fileBasicDesc[args.t].reduce((acc, { key, label }) => {
+            const fileBasicContent = fileBasicDesc[args.type].reduce((acc, { key, label }) => {
                 acc[key] = {
                     label,
                     value: row[key],
@@ -194,13 +169,13 @@ function processFileData(sheet) {
             fileBasicContent['date'] = { value: args.date, label: 'Month & Year: ' };
             fileDescription.set(uniqueKey, fileBasicContent);
 
-            for (const col of removeColumns[args.t]) {
+            for (const col of removeColumns[args.type]) {
                 delete row[col];
             }
 
             uniqueCategories.set(uniqueKey, [row]);
         } else {
-            for (const col of removeColumns[args.t]) {
+            for (const col of removeColumns[args.type]) {
                 delete row[col];
             }
 
@@ -209,10 +184,10 @@ function processFileData(sheet) {
 
     }
 
-    writeFiles(uniqueCategories, fileDescription);
+    return await writeFiles(uniqueCategories, fileDescription, args);
 }
 
-function updateExcelHeader(sheet) {
+async function updateExcelHeader(sheet, type) {
     var range = xlsx.utils.decode_range(sheet['!ref']);
     var C, R = range.s.r;
     for (C = range.s.c; C <= range.e.c; ++C) {
@@ -221,62 +196,42 @@ function updateExcelHeader(sheet) {
         var name = "UNKNOWN " + C; // <-- replace with your desired default 
         if (cell && cell.t) name = xlsx.utils.format_cell(cell);
 
-        if (!removeColumns[args.t].includes(name)) {
-            tableHeaders[args.t].push({ name })
+        if (!removeColumns[type].includes(name)) {
+            tableHeaders[type].push({ name })
         }
     }
 }
 
-function readInputFile() {
-    fs.readFile(args.i, (err, content) => {
-        if (err) {
-            printError(`Failed to read the input file\n${err.toString()}`);
-            return;
-        } else {
-            printStatus("Input file read successfully!!");
-            const workbook = xlsx.read(content, { type: "buffer", cellDates: true });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+async function readInputFile(args) {
+    printStatus("Input file read successfully!!");
+    const workbook = xlsx.read(args.inputfile, { type: "buffer", cellDates: true });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-            updateExcelHeader(sheet);
-            processFileData(sheet);
-        }
-    });
+    await updateExcelHeader(sheet, args.type);
+    return await processFileData(sheet, args);
 }
 
-function validateArguments() {
-    const inputFilePath = path.resolve(args.i);
-    const outDirPath = path.resolve(args.o);
+function main(req, res) {
+    const { type, output, theme, date } = req.body;
+    const outDirPath = path.resolve(output);
 
-    if (!fs.existsSync(inputFilePath)) {
-        printError("Invalid input file path");
-        return;
+    if (!req.files || !req.files.length) {
+        res.send('Missing input file');
+    } else if (!output || !output.length) {
+        res.send("Missing output directory path");
+    } else if (!type || !type.length) {
+        res.send("Missing type for split");
     } else if (!fs.existsSync(outDirPath)) {
-        printError("Invalid output directory");
-        return;
-    } else if (!Object.keys(types).includes(args.t)) {
-        printError("Invalid type. Possible types (manager) / (category)");
-        return;
+        res.send("Invalid output directory");
     } else {
-        args = { ...args, i: inputFilePath, o: outDirPath, t: args.t.toLowerCase() };
-        readInputFile();
+        readInputFile({ type, outdir: output, inputfile: req.files[0].buffer, theme, date }).then((data) => {
+            printStatus(data);
+            res.send(data);
+        }).catch((err) => {
+            printError(err);
+            res.send(err);
+        });
     }
 }
 
-function main() {
-    if (args.help) {
-        help();
-        return;
-    } else if (!args.i || !args.i.length) {
-        printError("Missing input file path");
-        return;
-    } else if (!args.o || !args.o.length) {
-        printError("Missing output directory path");
-        return;
-    } else if (!args.t || !args.t.length) {
-        printError("Missing type for split");
-        return;
-    } else {
-        validateArguments();
-    }
-}
-main();
+module.exports = main;

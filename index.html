@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="/excel-splitter/">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" charset="utf-8">
+    <title>Excel Splitter</title>
+    <meta http-equiv="X-UA-Compatible" name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style media="screen">
+        ::-webkit-scrollbar {
+            width: 6px !important;
+            height: 6px !important;
+        }
+        ::-webkit-scrollbar-track {
+            border-radius: 8px !important;
+            background: #fff;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #b5b5b5 !important;
+            border-radius: 10px !important;
+        }
+        ::-webkit-scrollbar-thumb:horizontal {
+            background: #b5b5b5 !important;
+            border-radius: 10px !important;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #999999 !important;
+        }
+    </style>
+    <style>
+        body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        h1,h2,h3,h4,h5,h6 {
+            margin: 0;
+        }
+
+        div {
+            margin: 10px 0;
+        }
+
+        label {
+            display: block;
+            font: 1rem 'Fira Sans', sans-serif;
+        }
+
+        input {
+            margin: 0;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px dotted black;
+            margin: 10%;
+            padding: 10px 2%;
+        }
+        
+    </style>
+    <script>
+        function onSubmit(abc) {
+            document.getElementById('submit').disabled = true;
+            document.querySelector('#loading').style.display = "block";
+            var xhr = new XMLHttpRequest();
+
+            xhr.open("POST", "/");
+            xhr.onload = function(event){
+                document.getElementById('submit').disabled = false;
+                document.querySelector('#loading').style.display = "none";
+                alert(`Server response: ${event.target.response}`);
+            };
+            var formData = new FormData(document.getElementById("excel-form")); 
+            xhr.send(formData);
+        }
+    </script>
+</head>
+<body>
+    <div class="app-container">
+        <h3>Excel Splitter</h3>
+        <form id="excel-form" method="post" enctype="multipart/form-data" onsubmit="return false;">
+            <div>
+                <div>
+                    <span>Upload input file: </span>
+                    <input type="file" id="excel" name="excel" accept=".xls,.xlsx"/>
+                </div>
+                <div>
+                    <span>Split type: </span>
+                    <span>
+                        <input type="radio" id="category" name="type" value="category"/>
+                        <span>Category</span>
+                        <input type="radio" id="manager" name="type" value="manager"/>
+                        <span>Manager</span>
+                    </span>
+                </div>
+                <div>
+                    <span>Date: </span>
+                    <input type="text" id="date" name="date"/>
+                </div>
+                <div>
+                    <span>Output folder path: </span>
+                    <input type="text" id="output" name="output"/>                  
+                </div>
+                <div>
+                    <span>Select theme: </span>
+                    <select id="theme" name="theme">
+                        <option value="1" selected>Blue-black</option>
+                        <option value="2">Red-green</option>
+                        <option value="3">Black-yellow</option>
+                        <option value="4">Red-black</option>
+                    </select>
+                </div>
+                <div>
+                    <button id="submit" onclick="onSubmit()">Submit</button>                
+                </div>
+            </div>
+        </form>
+        <div id="loading" style="display: none;">
+            In progress ...
+        </div>
+    </div>
+<!-- Prompt a message in the browser if users disabled JS -->
+<noscript>Your browser does not support JavaScript!</noscript>
+</body>
+</html>
