@@ -36,6 +36,15 @@ const dateColumns = {
     manager: [4, 5],
     category: [4, 5],
 }
+const themeTableHeader = {
+    'TableStyleLight9': '4f81bd',
+    'TableStyleLight10': 'C0504D',
+    'TableStyleLight11': '9BBB59',
+    'TableStyleLight12': '8064A2',
+    'TableStyleLight13': '4BACC6',
+    'TableStyleLight14': 'F79646',
+}
+const defaultTheme = Object.keys(themeTableHeader)[0];
 
 function printError(error) {
     console.log(`${new Date().toLocaleString()} Error: ${error}`);
@@ -69,7 +78,7 @@ async function formatWorksheet(ws, type) {
     return ws;
 }
 
-async function fileBasicData(ws, fileData, type) {
+async function fileBasicData(ws, fileData, { type, theme = defaultTheme }) {
     if (type === 'manager') {
         ws.mergeCells('A1:J1');
     } else {
@@ -85,7 +94,7 @@ async function fileBasicData(ws, fileData, type) {
     fileHeader.fill = {
         type: 'pattern',
         pattern:'solid',
-        fgColor: { argb: '4f81bd' },
+        fgColor: { argb: themeTableHeader[theme] },
       };
     
     for (const data in fileData) {
@@ -114,13 +123,14 @@ function initialNewWorkbook(sheetName) {
     return wb;
 }
 
-function addFileData(ws, rows, type) {
+function addFileData(ws, rows, { type, theme = defaultTheme }) {
     ws.addTable({
         name: 'employeeTable',
         ref: 'A8',
         headerRow: true,
         style: {
             showRowStripes: true,
+            theme,
         },
         columns: tableHeaders[type],
         rows: rows.map(row => Object.values(row)),
@@ -134,8 +144,8 @@ async function writeFiles(uniqueCategories, fileDescription, args) {
         let wb = initialNewWorkbook(key);
 
         // Write into excel
-        fileBasicData(wb.worksheets[0], fileDescription.get(key), args.type);
-        addFileData(wb.worksheets[0], values, args.type);
+        fileBasicData(wb.worksheets[0], fileDescription.get(key), { type: args.type, theme: args.theme });
+        addFileData(wb.worksheets[0], values, { type: args.type, theme: args.theme });
 
         try {
             await wb.xlsx.writeFile(`${args.outdir}/${key}.xlsx`);
@@ -147,7 +157,7 @@ async function writeFiles(uniqueCategories, fileDescription, args) {
         };
     }
     printOutput(total, successful, failed);
-    return 'Files Successfully generated !!';
+    return `Process completed: Total: ${total}, Successful: ${successful}, Failed: ${failed}`;
 }
 
 async function processFileData(sheet, args) {
@@ -156,7 +166,11 @@ async function processFileData(sheet, args) {
     const rows = xlsx.utils.sheet_to_json(sheet, { defval: ' ' });
     const uniqueCategories = new Map(), fileDescription = new Map();
     for (const row of rows) {
-        const uniqueKey = row[types[args.type]].trim().toLowerCase();
+        let uniqueKey = row[types[args.type]].trim();
+
+        if (args.type === 'manager') {
+            uniqueKey = uniqueKey.toLowerCase();
+        }
 
         if (!uniqueCategories.has(uniqueKey)) {
             const fileBasicContent = fileBasicDesc[args.type].reduce((acc, { key, label }) => {

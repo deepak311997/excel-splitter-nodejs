@@ -1,53 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <base href="/excel-splitter/">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" charset="utf-8">
     <title>Excel Splitter</title>
-    <meta http-equiv="X-UA-Compatible" name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" name="viewport" content="width=device-width, initial-scale=1.0" />
     <style media="screen">
         ::-webkit-scrollbar {
             width: 6px !important;
             height: 6px !important;
         }
+
         ::-webkit-scrollbar-track {
             border-radius: 8px !important;
             background: #fff;
         }
+
         ::-webkit-scrollbar-thumb {
             background: #b5b5b5 !important;
             border-radius: 10px !important;
         }
+
         ::-webkit-scrollbar-thumb:horizontal {
             background: #b5b5b5 !important;
             border-radius: 10px !important;
         }
+
         ::-webkit-scrollbar-thumb:hover {
             background: #999999 !important;
         }
     </style>
     <style>
         body {
-            height: 100%;
-            width: 100%;
+            height: 100vh;
+            width: 100vw;
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             overflow: hidden;
             font-family: 'Courier New', Courier, monospace;
+            background: #afd36991;
         }
 
-        h1,h2,h3,h4,h5,h6 {
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: white;
+            animation: ripple 15s infinite;
+            box-shadow: 0px 0px 1px 0px #508fb9;
+        }
+
+        .small {
+            width: 200px;
+            height: 200px;
+            left: -100px;
+            bottom: -100px;
+        }
+
+        .medium {
+            width: 400px;
+            height: 400px;
+            left: -200px;
+            bottom: -200px;
+        }
+
+        .large {
+            width: 600px;
+            height: 600px;
+            left: -300px;
+            bottom: -300px;
+        }
+
+        .xlarge {
+            width: 800px;
+            height: 800px;
+            left: -400px;
+            bottom: -400px;
+        }
+
+        .xxlarge {
+            width: 1000px;
+            height: 1000px;
+            left: -500px;
+            bottom: -500px;
+        }
+
+        .shade1 {
+            opacity: 0.2;
+        }
+
+        .shade2 {
+            opacity: 0.5;
+        }
+
+        .shade3 {
+            opacity: 0.7;
+        }
+
+        .shade4 {
+            opacity: 0.8;
+        }
+
+        .shade5 {
+            opacity: 0.9;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0.8);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(0.8);
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             margin: 0;
-        }
-
-        div {
-            margin: 10px 0;
-        }
-
-        label {
-            display: block;
-            font: 1rem 'Fira Sans', sans-serif;
         }
 
         input {
@@ -56,77 +135,162 @@
 
         .app-container {
             display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             border: 2px dotted black;
-            margin: 10%;
+            width: 50%;
+            margin-top: 10%;
             padding: 10px 2%;
         }
-        
+
+        #excel-form {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        #excel-form>div {
+            margin: 10px 0;
+        }
+
+        .output-path {
+            width: 60%;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            height: 60px;
+            width: 100%;
+            opacity: 0.5;
+            background: #1d1c1c;
+            color: #FFFFFF;
+            justify-content: center;
+            display: flex;
+            align-items: center;
+        }
+
+        .link {
+            color: white;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 80px;
+            height: 80px;
+        }
+
+        .loading:after {
+            content: " ";
+            display: block;
+            width: 35px;
+            height: 35px;
+            margin: 8px;
+            border-radius: 50%;
+            border: 6px solid #fff;
+            border-color: #fff transparent #fff transparent;
+            animation: loading 1.2s linear infinite;
+        }
+
+        @keyframes loading {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
     <script>
         function onSubmit(abc) {
             document.getElementById('submit').disabled = true;
-            document.querySelector('#loading').style.display = "block";
+            document.querySelector('.loading').style.display = "block";
             var xhr = new XMLHttpRequest();
 
             xhr.open("POST", "/");
-            xhr.onload = function(event){
+            xhr.onload = function (event) {
                 document.getElementById('submit').disabled = false;
-                document.querySelector('#loading').style.display = "none";
-                alert(`Server response: ${event.target.response}`);
+                document.querySelector('.loading').style.display = "none";
+                alert(event.target.response);
             };
-            var formData = new FormData(document.getElementById("excel-form")); 
+            var formData = new FormData(document.getElementById("excel-form"));
             xhr.send(formData);
         }
     </script>
 </head>
+
 <body>
     <div class="app-container">
-        <h3>Excel Splitter</h3>
-        <form id="excel-form" method="post" enctype="multipart/form-data" onsubmit="return false;">
-            <div>
+        <div class='ripple-background'>
+            <div class='circle xxlarge shade1'></div>
+            <div class='circle xlarge shade2'></div>
+            <div class='circle large shade3'></div>
+            <div class='circle medium shade4'></div>
+            <div class='circle small shade5'></div>
+        </div>
+        <div class="container">
+            <h3>Excel Splitter</h3>
+            <form id="excel-form" method="post" enctype="multipart/form-data" onsubmit="return false;">
                 <div>
                     <span>Upload input file: </span>
-                    <input type="file" id="excel" name="excel" accept=".xls,.xlsx"/>
+                    <input type="file" id="excel" name="excel" accept=".xls,.xlsx" />
                 </div>
                 <div>
                     <span>Split type: </span>
                     <span>
-                        <input type="radio" id="category" name="type" value="category"/>
+                        <input type="radio" id="category" name="type" value="category" />
                         <span>Category</span>
-                        <input type="radio" id="manager" name="type" value="manager"/>
+                        <input type="radio" id="manager" name="type" value="manager" />
                         <span>Manager</span>
                     </span>
                 </div>
                 <div>
                     <span>Date: </span>
-                    <input type="text" id="date" name="date"/>
+                    <input type="text" id="date" name="date" />
                 </div>
                 <div>
                     <span>Output folder path: </span>
-                    <input type="text" id="output" name="output"/>                  
+                    <input type="text" id="output" name="output" class="output-path" />
                 </div>
                 <div>
                     <span>Select theme: </span>
                     <select id="theme" name="theme">
-                        <option value="1" selected>Blue-black</option>
-                        <option value="2">Red-green</option>
-                        <option value="3">Black-yellow</option>
-                        <option value="4">Red-black</option>
+                        <option value="TableStyleLight9" selected>Blue Light 9</option>
+                        <option value="TableStyleLight10">Orange Light 10</option>
+                        <option value="TableStyleLight11">White Light 11</option>
+                        <option value="TableStyleLight12">Gold Light 12</option>
+                        <option value="TableStyleLight13">Blue Light 13</option>
+                        <option value="TableStyleLight14">Green Light 14</option>
                     </select>
                 </div>
                 <div>
-                    <button id="submit" onclick="onSubmit()">Submit</button>                
+                    <button id="submit" onclick="onSubmit()">Submit</button>
                 </div>
-            </div>
-        </form>
-        <div id="loading" style="display: none;">
-            In progress ...
+            </form>
+            <div class="loading" style="display: none;"></div>
         </div>
     </div>
-<!-- Prompt a message in the browser if users disabled JS -->
-<noscript>Your browser does not support JavaScript!</noscript>
+    <footer>
+        <div class="footer-copyright text-center py-3">© 2020 Copyright:
+            <a class="link" href="http://localhost:3000/">Excel Splitter</a>
+            <span>by Deepak V</span>
+        </div>
+    </footer>
+    <!-- Prompt a message in the browser if users disabled JS -->
+    <noscript>Your browser does not support JavaScript!</noscript>
 </body>
+
 </html>

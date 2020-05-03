@@ -2,7 +2,7 @@ const express = require('express');
 var multer = require('multer')();
 const path = require('path');
 const app = express();
-const main = require('./script');
+const main = require('./src/script');
 const port = 3000;
 
 app.use(multer.any());
