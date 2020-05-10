@@ -5,6 +5,7 @@ const path = require("path");
 const fs = require("fs");
 const exceljs = require("exceljs");
 const xlsx = require("xlsx");
+const zip = require('zip-folder');
 
 // Excel headers
 let tableHeaders = { category: [], manager: [] };
@@ -45,6 +46,7 @@ const themeTableHeader = {
     'TableStyleLight14': 'F79646',
 }
 const defaultTheme = Object.keys(themeTableHeader)[0];
+const outputPath = `${__dirname}/output/`;
 
 function printError(error) {
     console.log(`${new Date().toLocaleString()} Error: ${error}`);
@@ -137,9 +139,25 @@ function addFileData(ws, rows, { type, theme = defaultTheme }) {
     }).commit();
 }
 
+function zipFolder() {
+    return new Promise((res, rej) => {
+        zip(outputPath, `${__dirname}/result.zip`, function(err) {
+            if(err) {
+               printError(err);
+               rej(err);
+            } else {
+                res();
+            }
+        });
+    });
+}
+
 async function writeFiles(uniqueCategories, fileDescription, args) {
     let successful = 0, failed = 0;
     const total = uniqueCategories.size;
+
+    fs.mkdirSync(outputPath);
+
     for (const [key, values] of uniqueCategories) {
         let wb = initialNewWorkbook(key);
 
@@ -148,7 +166,7 @@ async function writeFiles(uniqueCategories, fileDescription, args) {
         addFileData(wb.worksheets[0], values, { type: args.type, theme: args.theme });
 
         try {
-            await wb.xlsx.writeFile(`${args.outdir}/${key}.xlsx`);
+            await wb.xlsx.writeFile(`${outputPath}${key}.xlsx`);
             successful = successful + 1;
             printStatus(`${key} file generated`);
         } catch (er) {
@@ -157,7 +175,7 @@ async function writeFiles(uniqueCategories, fileDescription, args) {
         };
     }
     printOutput(total, successful, failed);
-    return `Process completed: Total: ${total}, Successful: ${successful}, Failed: ${failed}`;
+    await zipFolder();
 }
 
 async function processFileData(sheet, args) {
@@ -230,20 +248,24 @@ function main(req, res) {
     const outDirPath = path.resolve(output);
 
     if (!req.files || !req.files.length) {
-        res.send('Missing input file');
-    } else if (!output || !output.length) {
-        res.send("Missing output directory path");
+        res.status(400).send('Missing input file');
     } else if (!type || !type.length) {
-        res.send("Missing type for split");
-    } else if (!fs.existsSync(outDirPath)) {
-        res.send("Invalid output directory");
+        res.status(400).send("Missing type for split");
     } else {
-        readInputFile({ type, outdir: output, inputfile: req.files[0].buffer, theme, date }).then((data) => {
-            printStatus(data);
-            res.send(data);
-        }).catch((err) => {
+        readInputFile({ type, outdir: output, inputfile: req.files[0].buffer, theme, date }).then(() => {
+            const resultPath =`${__dirname}/result.zip`;
+            const stream = fs.createReadStream(resultPath);
+
+            stream.pipe(res);
+            res.on('finish', () => {
+                if (fs.existsSync(outputPath)){
+                    fs.rmdirSync(outputPath, { recursive: true });
+                    fs.unlinkSync(resultPath);
+                }
+            });
+        }).catch(err => {
             printError(err);
-            res.send(err);
+            res.status(500).send("Failed to send file");
         });
     }
 }

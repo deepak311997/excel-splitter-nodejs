@@ -2,16 +2,14 @@ const express = require('express');
 var multer = require('multer')();
 const path = require('path');
 const app = express();
-const main = require('./src/script');
 const port = process.env.PORT || 3000;
+const main = require('./src/script');
 
 app.use(multer.any());
+app.use(express.static('./'));
 
-app.get('*', function(req, res) {
-    res.sendFile(path.join(__dirname + '/index.html'));
-});
-
-app.post('/', function(req, res) {
+app.post('/api/process', function(req, res) {
+    res.setHeader('Content-Disposition', 'attachment; filename=result.zip');
     main(req, res);
 });
 
