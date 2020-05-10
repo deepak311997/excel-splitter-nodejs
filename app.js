@@ -6,7 +6,7 @@ const port = process.env.PORT || 3000;
 const main = require('./src/script');
 
 app.use(multer.any());
-app.use(express.static('./'));
+app.use(express.static('./static/'));
 
 app.post('/api/process', function(req, res) {
     res.setHeader('Content-Disposition', 'attachment; filename=result.zip');
