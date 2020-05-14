@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <base href="/">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" charset="utf-8">
-    <title>Excel Splitter</title>
+    <title>Gagan Chand A N</title>
     <meta http-equiv="X-UA-Compatible" name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" type="text/css" />
     <style media="screen">
@@ -44,28 +43,28 @@
             <div class='circle small shade5'></div>
         </div>
         <div class="container">
-            <h3>Excel Splitter</h3>
+            <i><u><h2>CAS Team Report Generator</h2></u></i>
             <form id="excel-form" method="post" enctype="multipart/form-data" onsubmit="return false;">
                 <div>
+                    <span>Report Type: </span>
+                    <span>
+                        <input type="radio" id="category" name="type" value="category" />
+                        <span>ISA Report</span>
+                        <input type="radio" id="manager" name="type" value="manager" />
+                        <span>NRE Report</span>
+                    </span>
+                </div>
+				<div>
                     <span>Upload input file: </span>
                     <input type="file" id="excel" name="excel" accept=".xls,.xlsx" />
                 </div>
                 <div>
-                    <span>Split type: </span>
-                    <span>
-                        <input type="radio" id="category" name="type" value="category" />
-                        <span>Category</span>
-                        <input type="radio" id="manager" name="type" value="manager" />
-                        <span>Manager</span>
-                    </span>
-                </div>
-                <div>
-                    <span>Date: </span>
-                    <input type="text" id="date" name="date" />
-                </div>
-                <div>
-                    <span>Output zip name: </span>
+                    <span>Output name: </span>
                     <input type="text" id="output" name="output" class="output-path" value="result"/>
+                </div>
+				<div>
+                    <span>Quarter / Month : </span>
+                    <input type="text" id="date" name="date" />
                 </div>
                 <div>
                     <span>Select theme: </span>
@@ -79,16 +78,18 @@
                     </select>
                 </div>
                 <div>
-                    <button id="submit">Submit</button>
+                    <center><button id="submit">Submit</button></center>
                 </div>
+				<div>
+					<a class="link" href=".">Refresh Page</a>
+				</div>
             </form>
             <div class="loading" style="display: none;"></div>
         </div>
     </div>
     <footer>
-        <div class="footer-copyright text-center py-3">© 2020 Copyright:
-            <a class="link" href="http://localhost:3000/">Excel Splitter</a>
-            <span>by Gagan Chand AN</span>
+        <div class="footer-copyright text-center py-8">
+		<font color=#0013ff><b>| © 2020 Copyright | Programmed By Gagan Chand A N |</font></b>
         </div>
     </footer>
     <!-- Prompt a message in the browser if users disabled JS -->
